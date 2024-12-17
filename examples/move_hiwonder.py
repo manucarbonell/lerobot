@@ -8,7 +8,7 @@ Notes:
 - position readouts are sadly pretty slow, they can take up to 450ms
 """
 
-import time
+from time import sleep
 import easyhid
 import numpy as np
 
@@ -49,23 +49,18 @@ class XArm():
         0x55 0x55 len 0x03 count [time_lsb time_msb, id, pos_lsb pos_msb]
         Servo position is in range [0, 1000]
         """
-        import pdb
-        pdb.set_trace()
-        pos = 450
         t_lsb, t_msb = itos(time)
         p_lsb, p_msb = itos(pos)
         self.dev.write([0x55, 0x55, 8, 0x03, 1, t_lsb, t_msb, id, p_lsb, p_msb])
 
-    def move_all(self, poss, time=0):
+    def move_all(self, poss, time=500):
         """
         Set the position of all servos at once
         """
-
+        
         for i in range(6):
             self.move_to(id=i+1, pos=poss[i], time=time)
-            import pdb
-            pdb.set_trace()
-            time.sleep(2)
+            sleep(2)
 
     def servos_off(self):
         self.dev.write([0x55, 0x55, 9, 20, 6, 1, 2, 3, 4, 5, 6])
@@ -109,67 +104,10 @@ class XArm():
         self.servos_off()
 
 
-class SafeXArm:
-    """
-    Wrapper to limit motion range and speed to maximize durability
-    Also remaps joint angles into the [-1, 1] range
-    """
-
-    def __init__(self, **kwargs):
-        self.arm = XArm(**kwargs)
-
-        self.min_pos = np.array([
-            100, # Base
-            200,
-            400,
-            100,
-            50,  # Wrist
-            200, # Gripper
-        ])
-
-        self.max_pos = np.array([
-            900, # Base
-            800,
-            900,
-            600,
-            850,  # Wrist
-            650,  # Gripper
-        ])
-
-        # Maximum movement speed in (range/second)
-        self.max_speed = 250
-
-        self.move_all([0] * 6)
-        time.sleep(2)
-
-    def read_pos(self):
-        return np.flip(self.arm.read_pos(), 0)
-
-    def rest(self):
-        return self.arm.rest()
-
-    def move_all(self, pos):
-        if not isinstance(pos, np.ndarray):
-            pos = np.array(pos)
-
-        # [-1, 1] => [0, 1]
-        pos = (pos + 1) / 2
-        target = self.min_pos + pos * (self.max_pos - self.min_pos)
-
-        target = np.flip(target, 0).astype(np.uint16)
-
-        # TODO: compute time needed based on last position
-        # Compute time needed to move each joint to target given max_speed
-        #cur_pos = self.arm.read_pos()
-        #time = (abs(cur_pos - target) / self.max_speed)
-        #time = (time * 1000).astype(np.uint16)
-
-        for i in range(6):
-            self.arm.move_to(id=i+1, pos=target[i], time=600)
 
 def demo():
-    arm = SafeXArm()
-
+    arm = XArm()
+    pos = 490
     # To the right
-    arm.move_all([-1, 0, 0, 0, 0, 0])
+    arm.move_all([pos]*6)
 demo()

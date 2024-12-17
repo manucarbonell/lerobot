@@ -1,0 +1,20 @@
+_target_: lerobot.common.robot_devices.robots.manipulator.ManipulatorRobot
+robot_type: hiwonder
+calibration_dir: .cache/calibration/hiwonder_default
+
+# Limit relative movement for safety
+max_relative_target: 5
+
+# Define leader arm
+leader_arms:
+  main:
+    _target_: lerobot.common.robot_devices.motors.hiwonder.HiwonderMotorsBus
+    port: /dev/ttyUSB0  # Update to your USB port
+    motors:
+      base_rotation: [1, lx_16a]
+      shoulder: [2, lx_16a]
+      elbow: [3, lx_16a]
+      wrist_pitch: [4, lx_16a]
+      wrist_roll: [5, lx_16a]
+      gripper: [6, lx_16a]
+
